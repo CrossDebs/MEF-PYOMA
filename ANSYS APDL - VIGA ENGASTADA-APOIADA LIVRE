@@ -1,0 +1,249 @@
+Finish
+/clear
+/FILNAME,SHAKER_BEAM
+/UNITS,SI
+
+!! Definição dos Parâmetros
+! Shaker
+M_SHAKER = 0.44 	! [kg] Massa da armadura do Shaker M_SHAKER = 15		! [kg]  
+K_SHAKER = 11500	! [N/m]
+C_SHAKER = 0
+H_SHAKER = 130/1000	! [m]
+
+! Acelerômetros
+M_ACEL = 5.8/1000	! [kg]
+H_ACEL1 = 87/1000	! [m]
+H_ACEL2 = 162/1000
+H_ACEL3 = 237/1000  ! [m]
+H_ACEL4 = 312/1000	! [m]
+
+/PREP7 ! ENTER PREPROCESSOR
+!! Definição dos materiais
+! 1) Viga de Alumínio
+MP,EX,1,6.9E+10		! N/m^2
+MP,GXY,1,2.6E+10	! N/m^2
+MP,DENS,1,2700		! kg/m^3
+
+!! Definição dos Tipos de elementos
+! Shaker
+ET,1,COMBIN14
+KEYOPT,1,2,3
+! Acelerômetro
+ET,2,MASS21
+! Viga
+ET,3,BEAM188
+
+!! Definição das constantes reais
+! Shaker massa-mola-amortecedor
+R,1,K_SHAKER,C_SHAKER
+! Massa Acelerômetros
+R,2,M_ACEL,M_ACEL,M_ACEL
+! Massa Shaker
+R,3,M_SHAKER,M_SHAKER,M_SHAKER
+
+!! Geometria
+! Keypoints [m]
+K,1,0,0,0
+K,2,0,H_ACEL1,0		! Acel 1
+K,3,0,H_SHAKER,0	! Shaker
+K,4,0,H_ACEL2,0		! Acel 2
+K,5,0,H_ACEL3,0		! Acel 3
+K,6,0,H_ACEL4,0		! Acel 4
+
+! Lines - Une os KP com uma linha
+LSTR,1,2
+LSTR,2,3
+LSTR,3,4
+LSTR,4,5
+LSTR,5,6
+ALLSEL,ALL
+
+! Seção retangular (19x3 mm)
+SECTYPE,1,BEAM,RECT, , 0   
+SECOFFSET, CENT 
+SECDATA,19/1000,3/1000	! [m]
+
+!! Pre-Meshing (Tamanho da malha)
+LESIZE,1,5E-3		! Espaçamento de 5mm
+LESIZE,2,5E-3
+LESIZE,3,5E-3
+LESIZE,4,5E-3
+LESIZE,5,5E-3
+
+!! Meshing
+TYPE,3		! BEAM188
+MAT,1		! Alumínio
+SECNUM,1	! Seção Retangular
+LMESH,1		! Cria a malha na linha
+LMESH,2		! Cria a malha na linha
+LMESH,3		! Cria a malha na linha
+LMESH,4		! Cria a malha na linha
+LMESH,5		! Cria a malha na linha
+
+/ESHAPE,1	! Mostra a forma dos elementos
+EPLOT   	! Plota os elementos
+
+!! Selecionar e armazena os nós dos elementos 
+!NSEL, Type, Item, Comp, VMIN, VMAX, VINC, KABS
+! - Seleciona os nós no intervalo VMIN,VMAX
+!*GET,xxxx,NODE,0,NUM,MAX 
+! - Armazena o número do nó na variável xxxx
+
+NSEL,S,LOC,Y,H_ACEL1-0.0001,H_ACEL1+0.0001 !ACEL1
+*GET,NODE_ACEL1,NODE,0,NUM,MAX
+NSEL,S,LOC,Y,H_SHAKER-0.0001,H_SHAKER+0.0001 !SHAKER
+*GET,NODE_SHAKER,NODE,0,NUM,MAX
+NSEL,S,LOC,Y,H_ACEL2-0.0001,H_ACEL2+0.0001 !ACEL2
+*GET,NODE_ACEL2,NODE,0,NUM,MAX
+NSEL,S,LOC,Y,H_ACEL3-0.0001,H_ACEL3+0.0001 !ACEL3
+*GET,NODE_ACEL3,NODE,0,NUM,MAX
+NSEL,S,LOC,Y,H_ACEL4-0.0001,H_ACEL4+0.0001 !ACEL4
+*GET,NODE_ACEL4,NODE,0,NUM,MAX
+
+!! Cria os elementos de massa
+! Acelerômetros
+NSEL,ALL		! Seleciona novamente todas as entidades
+*GET,LAST_NODE,NODE,0,NUM,MAX	! Armazena o último nó
+NODE_MASSA = LAST_NODE+1
+TYPE,2
+REAL,2
+N,NODE_MASSA,0,H_ACEL1,0
+E,NODE_MASSA
+N,NODE_MASSA+1,0,H_ACEL2,0
+E,NODE_MASSA+1
+N,NODE_MASSA+2,0,H_ACEL3,0
+E,NODE_MASSA+2
+N,NODE_MASSA+3,0,H_ACEL4,0
+E,NODE_MASSA+3
+! CERIG: Cria conexão rígida entre o nó do acelerômetro
+! e o nó criado para as massas
+CERIG,NODE_ACEL1,NODE_MASSA
+CERIG,NODE_ACEL2,NODE_MASSA+1
+CERIG,NODE_ACEL3,NODE_MASSA+2
+CERIG,NODE_ACEL4,NODE_MASSA+3
+
+! Shaker
+TYPE,2
+REAL,3
+N,NODE_MASSA+4,0,H_SHAKER,0
+E,NODE_MASSA+4
+CERIG,NODE_SHAKER,NODE_MASSA+4
+
+! Sistema Massa-Mola Shaker
+TYPE,1
+REAL,1
+N,NODE_MASSA+5,0,H_SHAKER,0
+E,NODE_MASSA+5,NODE_MASSA+4
+NSEL,S,NODE,,NODE_MASSA+5		! Restringindo o nó da mola
+D,ALL,ALL,0						! Restringindo o nó da mola
+
+!! Aplicando as condições de contorno
+! Restrição base da viga
+NSEL,S,NODE,,1
+D,ALL,ALL,0
+ALLSEL,ALL
+
+! Restrição do deslocamento apenas em Z e sem rotação no eixo Y
+D,NODE_ACEL1,UX,0
+D,NODE_ACEL2,UX,0
+D,NODE_ACEL3,UX,0
+D,NODE_ACEL4,UX,0
+D,NODE_SHAKER,UX,0
+D,NODE_ACEL1,UY,0
+D,NODE_ACEL2,UY,0
+D,NODE_ACEL3,UY,0
+D,NODE_ACEL4,UY,0
+D,NODE_SHAKER,UY,0
+D,NODE_ACEL1,ROTY,0
+D,NODE_ACEL2,ROTY,0
+D,NODE_ACEL3,ROTY,0
+D,NODE_ACEL4,ROTY,0
+D,NODE_SHAKER,ROTY,0
+
+!! Análise estática
+/SOLU	! Solution
+ANTYPE,STATIC,NEW
+PSTRES,ON
+ACEL,0,-9.81,0
+
+/STATUS,SOLU
+SOLVE
+FINISH
+
+!! Análise modal
+/SOLU
+ANTYPE,MODAL
+MODOPT,LANB,5
+EQSLV,SPAR 		! Equation Solver (Sparse) 
+LUMPM,ON 
+MXPAND,5,,,yes 	! 10 primeiros modos 
+LUMPM,0	
+PSTRES,1	
+ACEL,0,-9.81,0
+
+/OUTPUT,_results_MODAL,dat
+SOLVE 
+
+SAVE
+FINISH
+
+/POST1  	! Pós-processador
+SET,LIST
+
+/aux2
+combine, full  ! combines all file*.full into file.full
+finish
+
+! Gets Stiffness and Mass Matrices
+*SMAT, K_out, D, import, full, SHAKER_BEAM.full, stiff
+*print, K_out, K_out.txt   ! Exports Stiffness to Text File
+*export, K_out, mmf, K_outMMF.txt ! Exports Stiffness as MMF
+
+*SMAT, M_out, D, import, full, SHAKER_BEAM.full, mass
+*print, M_out, M_out.txt
+*export, M_out, mmf, M_outMMF.txt
+
+*SMAT, NOD2SOLV_out, D, import, full, SHAKER_BEAM.full, NOD2SOLV
+!*print, NOD2SOLV_out, NOD2SOLV.txt
+
+!! Análise Harmônica
+/SOLU
+ANTYPE,HARMIC
+PSTRES,ON
+F,NODE_SHAKER,FZ,440
+
+!Defines the frequency range in a harmonic analysis. HARFRQ, FREQB, FREQE, --, LogOpt, FREQARR, Toler
+!HARFRQ,1,1000,,LOG		! Frequency range | LogOpt = OB1 octave band;  OB2 1/2 octave band... LOG = logarithm freq span
+HARFRQ,1,1000
+NSUBST,1000    			! Number of steps
+!KBC,1
+
+/OUTPUT,_results_HARMIC,dat
+SOLVE   
+FINISH 
+
+/POST26 	! TimeHist Postproc
+FILE,'SHAKER_BEAM','rst','.'	! Structural file
+NUMVAR,200  			! Specifies the number of variables allowed in POST26.
+
+!! Extraindo os deslocamentos
+NSOL,2,NODE_ACEL1,U,Z,UZ_AC1, 
+STORE,MERGE
+NSOL,3,NODE_ACEL2,U,Z,UZ_AC2, 
+STORE,MERGE
+NSOL,4,NODE_ACEL3,U,Z,UZ_AC3, 
+STORE,MERGE
+NSOL,5,NODE_ACEL4,U,Z,UZ_AC4, 
+STORE,MERGE
+NSOL,6,NODE_SHAKER,U,Z,UZ_SKR, 
+STORE,MERGE 
+
+! Plotar as variáveis
+XVAR,1  
+/GROPT,LOGY,1	! Altera para escala semilogaritmica no eixo Y
+PLVAR,2,3,4,5	! Plota os deslocamentos dos acelerômetros
+
+! Análise Transiente
+!ANTYPE,TRANS
+!TRNOPT,FULL 
+!LUMPM,0 
