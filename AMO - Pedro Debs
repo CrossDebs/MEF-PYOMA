@@ -1,4 +1,11 @@
-#
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Jan 31 11:05:29 2021
+
+@author: dagpa
+"""
+# =============================================================================
+# EXAMPLE pyOMA
 # =============================================================================
 # Import modules
 import numpy as np
@@ -11,7 +18,7 @@ import PyOMA as oma
 
 # ======== PRE-PROCESSING =====================================================
 # To open a .txt file create a variable containing the path to the file
-_file = r"C:/Users/pedro/OneDrive/Área de Trabalho/Mestrado/Análise modal/2023 10 27 Análise Modal/2023 10 27 Análise Modal/Viga_0db_med3.txt" # Path to the txt file
+_file = r"C:/Users/pedro/OneDrive/Área de Trabalho/Mestrado/Análise Modal/Papper/2023 10 27 Análise Modal/2023 10 27 Análise Modal/Viga_0db_med3.txt" # Path to the txt file
 
 # open the file with pandas and create a dataframe
 # N.B. whatchout for header, separator and remove time column if present
@@ -19,7 +26,7 @@ _file = r"C:/Users/pedro/OneDrive/Área de Trabalho/Mestrado/Análise modal/2023
 #data = data.to_numpy()
 data = np.loadtxt(_file)
 data = data[:,1:]
-modos = np.array([[0/15.59, 0.75/15.59, 6.47/15.59, 15.59/15.59],[0.01/14.48, 4.44/14.48, 14.48/14.48, -10.28/14.48],[3.77/8.55, 8.55/8.55, -2.08/8.55, 3.77/8.55],[10.13/10.13, 1.99/10.13, 0.81/10.13, 0.57/10.13]])
+modos = np.array([[-0.98948e-002/0.60755e-001, -0.48532e-002/0.60755e-001, 0.22826e-001/0.60755e-001, 0.60755e-001/0.60755e-001],[-0.31665e-003/-0.62809e-002, 0.30138e-002/-0.62809e-002, 0.56613e-002/-0.62809e-002, -0.62809e-002/-0.62809e-002],[-0.45416e-002/0.54437e-002, 0.52189e-002/0.54437e-002, -0.54437e-002/0.54437e-002, 0.44074e-002/0.54437e-002],[0.44151e-003/0.93633e-002, -0.93633e-002/0.93633e-002, 0.43287e-002/0.93633e-002, -0.49556e-002/0.93633e-002]])
 FI_ex = modos.T
 
 # to retrieve the example data 
@@ -76,7 +83,11 @@ MS_SSIcov = Res_SSIcov['Mode Shapes'].real
 MS_SSIdat = Res_SSIdat['Mode Shapes'].real
 _nch = data.shape[1]
 plt.figure()
+plt.subplot(121)
 plt.plot(FI_ex,[1, 2, 3, 4])
+plt.subplot(122)
+plt.plot(MS_FSDD,[1, 2, 3, 4])
+
 
 
 MAC = np.reshape(
